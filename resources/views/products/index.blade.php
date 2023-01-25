@@ -5,16 +5,24 @@
         <h1 class="h3 mb-0 text-gray-800">Products</h1>
     </div>
 
-
     <div class="card">
-        <form action="" method="get" class="card-header">
+        <form action="{{ route('filter-products') }}" method="get" class="card-header">
             <div class="form-row justify-content-between">
                 <div class="col-md-2">
-                    <input type="text" name="title" placeholder="Product Title" class="form-control">
+                    <input type="text" name="title" placeholder="Product Title" class="form-control"
+                        value="{{ isset($_GET['title']) && $_GET['title'] ? $_GET['title'] : '' }}">
                 </div>
                 <div class="col-md-2">
                     <select name="variant" id="" class="form-control">
-
+                        <option value="">--Select A Variant--</option>
+                        @foreach ($variantPrices as $variantPrice)
+                            <option value="{{ $variantPrice->id }}"
+                                {{ isset($_GET['variant']) && $_GET['variant'] == $variantPrice->id ? 'selected' : '' }}>
+                                {{ $variantPrice->variantTwoPriceToVarianProduct ? $variantPrice->variantTwoPriceToVarianProduct->variant : '' }}
+                                {{ $variantPrice->variantOnePriceToVarianProduct ? ' /' . $variantPrice->variantOnePriceToVarianProduct->variant : '' }}
+                                {{ $variantPrice->variantThreePriceToVarianProduct ? ' /' . $variantPrice->variantThreePriceToVarianProduct->variant : '' }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -23,13 +31,16 @@
                         <div class="input-group-prepend">
                             <span class="input-group-text">Price Range</span>
                         </div>
-                        <input type="text" name="price_from" aria-label="First name" placeholder="From"
-                            class="form-control">
-                        <input type="text" name="price_to" aria-label="Last name" placeholder="To" class="form-control">
+                        <input type="number" name="price_from" aria-label="First name" placeholder="From"
+                            class="form-control"
+                            value="{{ isset($_GET['price_from']) && $_GET['price_from'] ? $_GET['price_from'] : '' }}">
+                        <input type="number" name="price_to" aria-label="Last name" placeholder="To" class="form-control"
+                            value="{{ isset($_GET['price_to']) && $_GET['price_to'] ? $_GET['price_from'] : '' }}">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <input type="date" name="date" placeholder="Date" class="form-control">
+                    <input type="date" name="date" placeholder="Date" class="form-control"
+                        value="{{ isset($_GET['date']) && $_GET['date'] ? $_GET['date'] : '' }}">
                 </div>
                 <div class="col-md-1">
                     <button type="submit" class="btn btn-primary float-right"><i class="fa fa-search"></i></button>
@@ -63,9 +74,9 @@
                                     <dl class="row mb-0" style="height: 80px; overflow: hidden" id="variant">
                                         @foreach ($product->productToProductVariantPrice as $variantPrice)
                                             <dt class="col-sm-3 pb-0">
-                                                {{ $variantPrice->variantTwoPriceToVarianProduct ? $variantPrice->variantTwoPriceToVarianProduct->variant . '/ ' : '' }}
-                                                {{ $variantPrice->variantOnePriceToVarianProduct ? $variantPrice->variantOnePriceToVarianProduct->variant . '/ ' : '' }}
-                                                {{ $variantPrice->variantThreePriceToVarianProduct ? $variantPrice->variantThreePriceToVarianProduct->variant : '' }}
+                                                {{ $variantPrice->variantTwoPriceToVarianProduct ? $variantPrice->variantTwoPriceToVarianProduct->variant : '' }}
+                                                {{ $variantPrice->variantOnePriceToVarianProduct ? ' /' . $variantPrice->variantOnePriceToVarianProduct->variant : '' }}
+                                                {{ $variantPrice->variantThreePriceToVarianProduct ? ' /' . $variantPrice->variantThreePriceToVarianProduct->variant : '' }}
                                             </dt>
                                             <dd class="col-sm-9">
                                                 <dl class="row mb-0">
@@ -107,4 +118,6 @@
             </div>
         </div>
     </div>
+
+    <script></script>
 @endsection

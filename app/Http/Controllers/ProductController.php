@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductVariantPrice;
 use App\Models\Variant;
 use Illuminate\Http\Request;
 
@@ -15,9 +16,20 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::with('productToProductVariantPrice', 'productToProductVariantPrice.variantOnePriceToVarianProduct', 'productToProductVariantPrice.variantTwoPriceToVarianProduct', 'productToProductVariantPrice.variantThreePriceToVarianProduct')
+        $products = Product::with(
+            'productToProductVariantPrice',
+            'productToProductVariantPrice.variantOnePriceToVarianProduct',
+            'productToProductVariantPrice.variantTwoPriceToVarianProduct',
+            'productToProductVariantPrice.variantThreePriceToVarianProduct'
+        )
             ->paginate(2);
-        return view('products.index', compact('products'));
+        $variantPrices = ProductVariantPrice::with(
+            'variantOnePriceToVarianProduct',
+            'variantTwoPriceToVarianProduct',
+            'variantThreePriceToVarianProduct'
+        )->get();
+
+        return view('products.index', compact('products', 'variantPrices'));
     }
 
     /**
@@ -39,6 +51,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        dd($request->all());
     }
 
 
@@ -85,5 +98,54 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         //
+    }
+
+    public function filterProducts(Request $request)
+    {
+        $rawProducts = Product::with(
+            'productToProductVariantPrice',
+            'productToProductVariantPrice.variantOnePriceToVarianProduct',
+            'productToProductVariantPrice.variantTwoPriceToVarianProduct',
+            'productToProductVariantPrice.variantThreePriceToVarianProduct'
+        );
+
+        if ($request->title) {
+            $rawProducts->where('title', $request->title);
+        }
+
+        if ($request->variant) {
+            $variant = $request->variant;
+            $rawProducts->whereHas('productToProductVariantPrice', function ($query) use ($variant) {
+                $query->where('id', $variant);
+            });
+        }
+
+        if ($request->date) {
+            $rawProducts->whereBetween('created_at', [$request->date . ' 08:18:53', $request->date . ' 23:59:59']);
+        }
+
+        if ($request->price_from) {
+            $price_from = $request->price_from;
+            $rawProducts->whereHas('productToProductVariantPrice', function ($query) use ($price_from) {
+                $query->where('price', '>=', $price_from);
+            });
+        }
+
+        if ($request->price_to) {
+            $price_to = $request->price_to;
+            $rawProducts->whereHas('productToProductVariantPrice', function ($query) use ($price_to) {
+                $query->where('price', '<=', $price_to);
+            });
+        }
+
+        $products = $rawProducts->paginate(2);
+
+        $variantPrices = ProductVariantPrice::with(
+            'variantOnePriceToVarianProduct',
+            'variantTwoPriceToVarianProduct',
+            'variantThreePriceToVarianProduct'
+        )->get();
+
+        return view('products.index', compact('products', 'variantPrices'));
     }
 }

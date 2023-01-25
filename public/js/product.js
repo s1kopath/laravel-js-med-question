@@ -97,7 +97,7 @@ function addVariantTemplate() {
                                 </div>
                             </div>`);
 
-    $(`#select2-option-${currentIndex}`).select2({placeholder: "Select Option", theme: "bootstrap4"});
+    $(`#select2-option-${currentIndex}`).select2({ placeholder: "Select Option", theme: "bootstrap4" });
 
     $(`#select2-value-${currentIndex}`)
         .select2({
