@@ -1,9 +1,9 @@
 <template>
     <section>
         <div v-if="this.success" class="alert alert-success alert-dismissible fade show" role="alert">
-            Product Created successfully.
+            Product updated successfully.
         </div>
-        <div class="row">
+        <div class="row" id>
             <div class="col-md-6">
                 <div class="card shadow mb-4">
                     <div class="card-body">
@@ -18,7 +18,7 @@
                         <div class="form-group">
                             <label for="">Description</label>
                             <textarea v-model="description" id="" cols="30" rows="4" class="form-control"></textarea>
-                        </div>z
+                        </div>
                     </div>
                 </div>
 
@@ -29,6 +29,7 @@
                     <div class="card-body border">
                         <vue-dropzone ref="myVueDropzone" id="dropzone" :options="dropzoneOptions"
                             @vdropzone-success="uploaded" @vdropzone-file-added="addfile">
+
                         </vue-dropzone>
                     </div>
                 </div>
@@ -116,20 +117,19 @@ export default {
         variants: {
             type: Array,
             required: true
+        },
+        product: {
+            type: Object,
+            required: true
         }
     },
     data() {
         return {
-            product_name: '',
-            product_sku: '',
-            description: '',
+            product_name: this.product.title ? this.product.title : '',
+            product_sku: this.product.sku ? this.product.sku : '',
+            description: this.product.description ? this.product.description : '',
             images: [],
-            product_variant: [
-                {
-                    option: this.variants[0].id,
-                    tags: []
-                }
-            ],
+            product_variant: [],
             product_variant_prices: [],
             success: false,
             dropzoneOptions: {
@@ -149,14 +149,9 @@ export default {
             console.log(response)
         },
         addfile: async function (file) {
-            // this.images = this.$refs.myVueDropzone.getAcceptedFiles();
             this.images.push(file);
             console.log(this.images)
         },
-        // sending: async function(file, xhr, formData){
-        //     formData.append('title', this.product_name);
-        //     console.log(formData.file)
-        // },
 
         // it will push a new object into product variant
         newVariant() {
@@ -184,8 +179,9 @@ export default {
                     title: item,
                     price: 0,
                     stock: 0
-                })
-            })
+                });
+            });
+            this.loadPrices();
         },
 
         // combination algorithm
@@ -201,10 +197,9 @@ export default {
             return ans;
         },
 
-        // store product into database
+        // update product into database
         saveProduct() {
-            console.log(this.product_variant)
-
+            // console.log(this.product_name)
             let product = new FormData();
             product.append('title', this.product_name);
             product.append('sku', this.product_sku);
@@ -218,33 +213,54 @@ export default {
             for (let x = 0; x < this.product_variant_prices.length; x++) {
                 product.append('product_variant_prices[]', JSON.stringify(this.product_variant_prices[x]));
             }
-
-            // let product = {
-            //     title: this.product_name,
-            //     sku: this.product_sku,
-            //     description: this.description,
-            //     product_image: this.images,
-            //     product_variant: this.product_variant,
-            //     product_variant_prices: this.product_variant_prices
+            // Display the key/value pairs
+            // for (var pair of product.entries()) {
+            //     console.log(pair[0]+ ', ' + pair[1]); 
             // }
 
-            console.log(product)
-
-            axios.post('/product', product).then(response => {
+            axios.post(`/product-update/${this.product.id}`, product).then(response => {
                 this.success = true;
                 setTimeout(() => {
                     this.success = false;
                 }, 3000);
-                console.log(response.data);
+                console.log(response);
             }).catch(error => {
-                this.success = false;
                 console.log(error);
             })
         },
-
+        loadProductVariant() {
+            let update;
+            this.product.product_variants.forEach((item, index) => {
+                this.product_variant && this.product_variant.forEach((item2, index2) => {
+                    if (item2.option == item.variant_id) {
+                        item2.tags.push(item.variant);
+                        update = true;
+                        return;
+                    }
+                });
+                if (!update) {
+                    this.product_variant.push({
+                        option: item.variant_id,
+                        tags: [item.variant]
+                    });
+                }
+                // console.log(this.product_variant[index])
+            });
+            console.log(this.product_variant)
+        },
+        loadPrices() {
+            this.product.prices.forEach((item, index) => {
+                if (this.product_variant_prices[index]) {
+                    this.product_variant_prices[index].price = item.price;
+                    this.product_variant_prices[index].stock = item.stock;
+                }
+            });
+        }
     },
     mounted() {
-        console.log('Component mounted.')
+        this.loadProductVariant();
+        this.checkVariant();
+        this.loadPrices();
     },
 }
 </script>
